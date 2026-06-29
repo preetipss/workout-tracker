@@ -325,18 +325,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="modal">
     <div class="mhandle"></div>
     <div class="mtitle">☁️ Cloud Backup</div>
-    <div class="msub">Auto-saves to cloud on every entry. Works via JSONBin.io — free, no credit card needed.</div>
+    <div class="msub">Auto-saves to cloud on every entry using your existing GitHub account — no new signup needed.</div>
 
     <div id="cl-setup">
       <div class="ibox ibox-c" style="margin-bottom:14px">
-        <b>One-time setup (1 min):</b><br>
-        1. Go to <b>jsonbin.io</b> in browser<br>
-        2. Click <b>Sign In</b> → use Google account<br>
-        3. Click <b>API Keys</b> tab → <b>Create Access Key</b><br>
-        4. Copy the key and paste below
+        <b>One-time setup (2 min) — you already have GitHub!</b><br><br>
+        1. Go to <b>github.com</b> → click your profile photo (top right) → <b>Settings</b><br><br>
+        2. Scroll to bottom of left sidebar → click <b>Developer settings</b><br><br>
+        3. Click <b>Personal access tokens</b> → <b>Tokens (classic)</b> → <b>Generate new token (classic)</b><br><br>
+        4. Name: <b>Workout Tracker</b> · Expiration: <b>No expiration</b> · tick ✅ <b>gist</b><br><br>
+        5. Click <b>Generate token</b> → copy the token → paste below
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">JSONBin API Key</div>
-      <input class="inp" id="cl-apikey-inp" placeholder="Paste your JSONBin API key here" type="text">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">GitHub Personal Access Token</div>
+      <input class="inp" id="cl-apikey-inp" placeholder="Paste your GitHub token (ghp_...)" type="password">
       <div class="blist">
         <button class="btn btn-g" id="cl-enable">⚡ Enable Auto Cloud Backup</button>
       </div>
@@ -353,8 +354,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="smsg" id="cl-msg"></div>
     <div style="height:16px"></div>
     <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:6px">Restore on a new device</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Enter your API Key + Backup ID:</div>
-    <input class="inp" id="cl-restore-key" placeholder="Paste API Key" type="text">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Enter your GitHub token + Backup ID:</div>
+    <input class="inp" id="cl-restore-key" placeholder="Paste GitHub token (ghp_...)" type="password">
     <input class="inp" id="cl-restore-inp" placeholder="Paste Backup ID" type="text">
     <button class="btn" style="background:var(--gbg);color:var(--g);border:1px solid var(--gbd)" id="cl-restore-btn">🔄 Restore My Data</button>
     <div style="height:10px"></div>
@@ -396,7 +397,7 @@ var DOWS=['Su','Mo','Tu','We','Th','Fr','Sa'];
 var DM={intense:'g',cardio:'b',other:'y',swim:'c',yoga:'p',home:'o2'};
 var SK='wt_data', CK='wt_cloud', NK='wt_name', LK='wt_last', AK='wt_apikey';
 var logKey=null, logSel={}, shareLink='', saveTimer=null;
-var JBIN='https://api.jsonbin.io/v3/b';
+var GIST_API='https://api.github.com/gists';
 
 // ── utils ─────────────────────────────────────────────
 function pad(n){return n<10?'0'+n:''+n}
@@ -414,14 +415,15 @@ function loadData(){try{var s=ls(SK);if(s)DATA=JSON.parse(s)}catch(e){DATA={}}}
 function saveLocal(){try{ls(SK,JSON.stringify(DATA))}catch(e){}}
 function cloudId(){return ls(CK)}
 function apiKey(){return ls(AK)}
-function jbHeaders(){return{'Content-Type':'application/json','Accept':'application/json','X-Master-Key':apiKey()}}
+function ghHeaders(){return{'Content-Type':'application/json','Accept':'application/vnd.github+json','Authorization':'Bearer '+apiKey()}}
+function gistBody(){return JSON.stringify({description:'Workout Tracker Backup',public:false,files:{'workout-data.json':{content:JSON.stringify(DATA)}}})}
 
 function autoCloud(){
   if(!cloudId()||!apiKey())return;
   if(saveTimer)clearTimeout(saveTimer);
   setCloudChip('saving','🔄 Saving…');
   saveTimer=setTimeout(function(){
-    fetch(JBIN+'/'+cloudId(),{method:'PUT',headers:jbHeaders(),body:JSON.stringify(DATA)})
+    fetch(GIST_API+'/'+cloudId(),{method:'PATCH',headers:ghHeaders(),body:gistBody()})
       .then(function(r){
         if(r.ok){var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});ls(LK,t);setCloudChip('on','☁️ Saved');updateCloudModal()}
         else{setCloudChip('err','⚠️ Error')}
@@ -725,46 +727,54 @@ g('cloud-modal').addEventListener('click',function(e){if(e.target===g('cloud-mod
 
 g('cl-enable').addEventListener('click',function(){
   var key=g('cl-apikey-inp').value.trim();
-  if(!key){showMsg('cl-msg','err','Please paste your JSONBin API Key first.');return}
+  if(!key){showMsg('cl-msg','err','Please paste your GitHub token first.');return}
+  if(key.indexOf('ghp_')!==0&&key.indexOf('github_pat_')!==0){showMsg('cl-msg','err','Token should start with ghp_ — please check and try again.');return}
   var btn=g('cl-enable');btn.textContent='⏳ Creating backup…';btn.disabled=true;
-  fetch(JBIN,{
+  fetch(GIST_API,{
     method:'POST',
-    headers:{'Content-Type':'application/json','Accept':'application/json','X-Master-Key':key,'X-Bin-Name':'workout-tracker'},
-    body:JSON.stringify(DATA)
+    headers:{'Content-Type':'application/json','Accept':'application/vnd.github+json','Authorization':'Bearer '+key},
+    body:JSON.stringify({description:'Workout Tracker Backup',public:false,files:{'workout-data.json':{content:JSON.stringify(DATA)}}})
   })
     .then(function(r){
       btn.textContent='⚡ Enable Auto Cloud Backup';btn.disabled=false;
-      if(!r.ok)throw new Error('HTTP '+r.status);
+      if(r.status===401){showMsg('cl-msg','err','❌ Invalid token. Please check it and try again.');throw new Error();}
+      if(!r.ok){showMsg('cl-msg','err','❌ Error '+r.status+'. Please try again.');throw new Error();}
       return r.json();
     })
     .then(function(data){
-      var id=data.metadata&&data.metadata.id;
+      var id=data.id;
       if(!id)throw new Error('no id');
       ls(CK,id);ls(AK,key);
       var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});ls(LK,t);
       setCloudChip('on','☁️ Saved');updateCloudModal();
       showMsg('cl-msg','ok','✅ Cloud backup enabled! Screenshot your Backup ID.');
     })
-    .catch(function(e){showMsg('cl-msg','err','❌ Could not connect. Check your API key and internet.');});
+    .catch(function(){});
 });
 
 g('cl-restore-btn').addEventListener('click',function(){
   var key=g('cl-restore-key').value.trim();
   var id=g('cl-restore-inp').value.trim();
-  if(!key||!id){showMsg('cl-msg','err','Please enter both your API Key and Backup ID.');return}
+  if(!key||!id){showMsg('cl-msg','err','Please enter both your GitHub token and Backup ID.');return}
   var btn=g('cl-restore-btn');btn.textContent='⏳ Restoring…';btn.disabled=true;
-  fetch(JBIN+'/'+id+'/latest',{headers:{'Accept':'application/json','X-Master-Key':key}})
-    .then(function(r){return r.ok?r.json():Promise.reject('HTTP '+r.status)})
+  fetch(GIST_API+'/'+id,{headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+key}})
+    .then(function(r){
+      if(r.status===401){showMsg('cl-msg','err','❌ Invalid token.');btn.textContent='🔄 Restore My Data';btn.disabled=false;throw new Error();}
+      if(r.status===404){showMsg('cl-msg','err','❌ Backup ID not found.');btn.textContent='🔄 Restore My Data';btn.disabled=false;throw new Error();}
+      return r.ok?r.json():Promise.reject('HTTP '+r.status);
+    })
     .then(function(res){
       btn.textContent='🔄 Restore My Data';btn.disabled=false;
-      var d=res.record;
+      var content=res.files&&res.files['workout-data.json']&&res.files['workout-data.json'].content;
+      if(!content)throw new Error('no content');
+      var d=JSON.parse(content);
       if(!d||typeof d!=='object')throw new Error('bad data');
       DATA=d;saveLocal();ls(CK,id);ls(AK,key);setCloudChip('on','☁️ Saved');
       updateCloudModal();render();
       showMsg('cl-msg','ok','✅ Restored! '+Object.keys(DATA).length+' days recovered.');
       toast('✅ Data restored successfully!');
     })
-    .catch(function(e){btn.textContent='🔄 Restore My Data';btn.disabled=false;showMsg('cl-msg','err','❌ Not found. Check your API Key and Backup ID.');});
+    .catch(function(){});
 });
 
 // ── share modal ───────────────────────────────────────
@@ -812,7 +822,7 @@ g('share-wa').addEventListener('click',function(){
 // ── init cloud status ─────────────────────────────────
 if(cloudId()&&apiKey()){
   setCloudChip('on','☁️ Synced');
-  fetch(JBIN+'/'+cloudId()+'/latest',{headers:{'Accept':'application/json','X-Master-Key':apiKey()}})
+  fetch(GIST_API+'/'+cloudId(),{headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+apiKey()}})
     .then(function(r){setCloudChip(r.ok?'on':'err',r.ok?'☁️ Synced':'⚠️ Offline')})
     .catch(function(){setCloudChip('err','⚠️ Offline')});
 } else {
