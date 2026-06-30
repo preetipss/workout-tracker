@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Workout Tracker">
+<meta name="theme-color" content="#111118">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACmElEQVR4nO3cPU7rQBhAUYLYQDoW9BrEFtgmonkLYFmvoKHAP+OrF8BzThtFtvRdzdjKKJfr9fEOjrr/7hvgdxMQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJw/Pbny8/eH36e+Nb4Yf7MpXFFWgpLOa01MPD5ncsRZNbX0o8A5FsB2Qvm9nm9HetQBqa056528JIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiGTtQNk6P9GfzLGTg0cCks4pHTuAOryFqefcRuc7FpB6ZjA05YGA1DOP/bO+vLy//Ndb4dy8xpMIiERAJAIiERCJgEgERCIgEgGRCIhkb0D+Zmo2Oyc+sAJpaB77Zz22hWloBkNTHn4G0tC5jc73yJHWj2s4HnQytzsTXa7HyXiNJxEQiYBIBEQiIBIBkQiIREAkAiIREImASAREsisgv5vOac/crUAk2wFZfma2Of2NgNTDegNrAamHDyslLAakHj5b6uFyvT7e+FY4E29hJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAk/wAYGEggmGqhygAAAABJRU5ErkJggg==">
+<title>Workout Tracker</title>
+<style>
+:root{
+  --bg:#111118;--surf:#1c1c28;--card:#242434;--bdr:#2e2e42;
+  --txt:#f0f0f8;--muted:#8888aa;
+  --g:#5cc85c;--gbg:#162a16;--gbd:#2d6a2d;
+  --b:#7d7dff;--bbg:#16163a;--bbd:#2d2d8a;
+  --y:#f5c842;--ybg:#2e2400;--ybd:#7a5f00;
+  --c:#38c4e0;--cbg:#002830;--cbd:#007a96;
+  --red:#ff5555;--redbg:rgba(255,85,85,.12);
+  --p:#c77dff;--pbg:#1e0a2e;--pbd:#7b2fbe;
+  --o:#ffb703;--obg:#1a1200;--obd:#8a6400;
+  --pt:env(safe-area-inset-top,0px);--pb:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+/* layout */
+#app{flex:1;display:flex;flex-direction:column;min-height:0;width:100%}
+#hdr{padding:10px 14px;padding-top:calc(10px + var(--pt));background:var(--bg);border-bottom:1px solid var(--bdr);flex-shrink:0}
+#scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;min-height:0}
+#nav{display:flex;background:var(--surf);border-top:1px solid var(--bdr);padding-bottom:var(--pb);flex-shrink:0}
+/* header */
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.htitle{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px}
+.hbtns{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:pointer;background:none}
+.streak-chip{background:var(--gbg);color:var(--g);border-color:var(--gbd);cursor:default}
+.cloud-chip{background:var(--surf);color:var(--muted);border-color:var(--bdr)}
+.cloud-chip.on{background:var(--gbg);color:var(--g);border-color:var(--gbd)}
+.cloud-chip.saving{background:var(--ybg);color:var(--y);border-color:var(--ybd)}
+.cloud-chip.err{background:var(--redbg);color:var(--red);border-color:var(--red)}
+.share-chip{background:var(--cbg);color:var(--c);border-color:var(--cbd)}
+/* views */
+.view{display:none;padding:14px 16px 24px}.view.on{display:block}
+/* nav */
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;border:none;background:none;color:var(--muted);font-size:11px;cursor:pointer;touch-action:manipulation}
+.nb.on{color:var(--g)}.nb svg{width:22px;height:22px;display:block}
+/* mini stats */
+.mrow{display:flex;gap:5px;margin-bottom:14px}
+.ms{flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:8px 4px;text-align:center}
+.ms-v{font-size:19px;font-weight:700;line-height:1}
+.ms-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+/* calendar */
+.cnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ctitle{font-size:17px;font-weight:700}
+.carr{width:38px;height:38px;border-radius:50%;border:1px solid var(--bdr);background:var(--surf);color:var(--txt);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.carr:active{background:var(--card)}
+.dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-size:11px;color:var(--muted);font-weight:600;padding:3px 0}
+.day{position:relative;padding-bottom:100%;border-radius:10px;border:1px solid var(--bdr);background:var(--surf);cursor:pointer}
+.day:active{opacity:.6}
+.day.empty{background:transparent;border-color:transparent;cursor:default;pointer-events:none}
+.day.future{opacity:.22;cursor:default;pointer-events:none}
+.day.today{border-color:var(--muted)}.day.has-e{background:var(--card)}
+.di{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;pointer-events:none}
+.dn{font-size:13px;font-weight:500}.ddots{display:flex;gap:2px}
+.dd{width:5px;height:5px;border-radius:50%}
+.dd-g{background:var(--g)}.dd-b{background:var(--b)}.dd-y{background:var(--y)}.dd-c{background:var(--c)}.dd-p{background:var(--p)}.dd-o2{background:var(--o)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.leg-d{width:8px;height:8px;border-radius:50%}
+/* stats */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px}
+.sc.full{grid-column:1/-1}
+.sc-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.sc-v{font-size:32px;font-weight:700;line-height:1}.sc-s{font-size:12px;color:var(--muted);margin-top:5px}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bl{font-size:12px;width:54px;flex-shrink:0}
+.bt{flex:1;height:8px;background:var(--card);border-radius:4px;overflow:hidden}
+.bf{height:100%;border-radius:4px;transition:width .4s}
+.bn{font-size:12px;width:22px;text-align:right;flex-shrink:0}
+.divider{height:1px;background:var(--bdr);margin:12px 0}
+/* history */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hitem{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px}
+.hd{font-size:14px;font-weight:600}.hw{font-size:11px;color:var(--muted);margin-top:2px}
+.hb{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.bdg{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;border:1px solid}
+.bdg-intense{background:var(--gbg);color:var(--g);border-color:var(--gbd)}
+.bdg-cardio{background:var(--bbg);color:var(--b);border-color:var(--bbd)}
+.bdg-other{background:var(--ybg);color:var(--y);border-color:var(--ybd)}
+.bdg-swim{background:var(--cbg);color:var(--c);border-color:var(--cbd)}
+.bdg-yoga{background:#1e0a2e;color:#c77dff;border-color:#7b2fbe}
+.bdg-home{background:#1a1200;color:#ffb703;border-color:#8a6400}
+.empty-s{text-align:center;color:var(--muted);padding:48px 20px;font-size:15px;line-height:1.7}
+.mo-row{border-bottom:1px solid var(--bdr);padding:12px 0}
+.mo-row:last-child{border-bottom:none}
+.mo-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mo-name{font-size:14px;font-weight:700}
+.mo-days{font-size:12px;color:var(--muted)}
+.mo-acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.mo-act{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid}
+.mo-bar-row{display:flex;align-items:center;gap:6px}
+.mo-bar-track{flex:1;height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+.mo-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.mo-total-chip{font-size:12px;font-weight:700;color:var(--txt)}
+/* modals */
+.modal-bg{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surf);border-radius:22px 22px 0 0;border-top:1px solid var(--bdr);padding:0 16px calc(20px + var(--pb));width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mhandle{width:38px;height:4px;background:var(--bdr);border-radius:2px;margin:10px auto 18px}
+.mtitle{font-size:17px;font-weight:700;margin-bottom:4px}
+.msub{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+/* toggles */
+.tlist{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.tog{display:flex;align-items:center;gap:12px;padding:14px 15px;border-radius:14px;border:1.5px solid var(--bdr);background:var(--card);cursor:pointer;touch-action:manipulation}
+.tog:active{opacity:.7}
+.tog-i{font-size:22px;flex-shrink:0}
+.tog-n{flex:1;font-size:15px;font-weight:500;color:var(--muted)}
+.chk{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tog.sel-intense{border-color:var(--gbd);background:var(--gbg)}.tog.sel-intense .tog-n{color:var(--g)}.tog.sel-intense .chk{border-color:var(--g);color:var(--g)}
+.tog.sel-cardio{border-color:var(--bbd);background:var(--bbg)}.tog.sel-cardio .tog-n{color:var(--b)}.tog.sel-cardio .chk{border-color:var(--b);color:var(--b)}
+.tog.sel-other{border-color:var(--ybd);background:var(--ybg)}.tog.sel-other .tog-n{color:var(--y)}.tog.sel-other .chk{border-color:var(--y);color:var(--y)}
+.tog.sel-swim{border-color:var(--cbd);background:var(--cbg)}.tog.sel-swim .tog-n{color:var(--c)}.tog.sel-swim .chk{border-color:var(--c);color:var(--c)}
+.tog.sel-yoga{border-color:var(--pbd);background:var(--pbg)}.tog.sel-yoga .tog-n{color:var(--p)}.tog.sel-yoga .chk{border-color:var(--p);color:var(--p)}
+.tog.sel-home{border-color:var(--obd);background:var(--obg)}.tog.sel-home .tog-n{color:var(--o)}.tog.sel-home .chk{border-color:var(--o);color:var(--o)}
+/* buttons */
+.acts{display:flex;gap:10px}
+.btn{padding:14px;border-radius:14px;border:none;font-size:15px;font-weight:700;cursor:pointer;width:100%;text-align:center;touch-action:manipulation}
+.btn:active{opacity:.8}
+.btn-g{background:var(--g);color:#081208}
+.btn-c{background:var(--cbg);color:var(--c);border:1px solid var(--cbd)}
+.btn-out{background:none;border:1px solid var(--bdr);color:var(--txt)}
+.btn-red{background:var(--redbg);border:1px solid var(--red);color:var(--red);padding:14px 18px;width:auto}
+.btn-wa{background:#0d2e16;border:1px solid #25d366;color:#25d366}
+/* info box */
+.ibox{border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.6;margin-bottom:12px;border:1px solid}
+.ibox-g{background:var(--gbg);border-color:var(--gbd);color:var(--g)}
+.ibox-y{background:var(--ybg);border-color:var(--ybd);color:var(--y)}
+.ibox-c{background:var(--cbg);border-color:var(--cbd);color:var(--c)}
+/* id display */
+.id-box{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px}
+.id-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.id-val{font-size:13px;font-family:monospace;color:var(--c);word-break:break-all;line-height:1.5}
+.inp{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--bdr);background:var(--card);color:var(--txt);font-size:14px;outline:none;margin-bottom:12px;font-family:inherit}
+.inp:focus{border-color:var(--c)}
+.blist{display:flex;flex-direction:column;gap:8px}
+.smsg{border-radius:10px;padding:10px 14px;font-size:13px;text-align:center;border:1px solid;display:none}
+.smsg.ok{background:var(--gbg);border-color:var(--gbd);color:var(--g)}
+.smsg.err{background:var(--redbg);border-color:var(--red);color:var(--red)}
+.link-box{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted);word-break:break-all;min-height:52px;line-height:1.6;margin-bottom:12px}
+/* toast */
+.toast{position:fixed;bottom:calc(84px + var(--pb));left:50%;transform:translateX(-50%) translateY(10px);background:var(--surf);border:1px solid var(--bdr);border-radius:20px;padding:10px 18px;font-size:13px;font-weight:600;z-index:999;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* trainer view */
+#tv{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+#tv.open{display:block}
+.tv-hero{background:linear-gradient(160deg,#0a1a0a,#162a16);padding:24px 20px 20px;padding-top:calc(24px + var(--pt));border-bottom:1px solid var(--gbd)}
+.tv-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:10px;border:1px solid}
+.tv-name{font-size:24px;font-weight:700;margin-bottom:4px}
+.tv-sub{font-size:13px;color:var(--muted)}
+.tv-refresh{display:none;margin-top:10px;align-items:center;gap:8px}
+.tv-ref-btn{background:none;border:1px solid var(--gbd);color:var(--g);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.tv-ref-time{font-size:11px;color:var(--muted)}
+.tv-sstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px}
+.tv-ss{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:10px 6px;text-align:center}
+.tv-sv{font-size:22px;font-weight:700;line-height:1}
+.tv-sl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.tv-sec{padding:0 14px 14px}
+.tv-stitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;font-weight:600}
+.tv-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:10px}
+.tv-mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tv-mname{font-size:15px;font-weight:700}
+.tv-mcnt{font-size:12px;color:var(--muted)}
+.tv-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.tv-dow{text-align:center;font-size:9px;color:var(--muted);font-weight:600;padding:2px 0}
+.tv-day{aspect-ratio:1;border-radius:6px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--muted);gap:1px}
+.tv-day.e{background:transparent}
+.tv-ddots{display:flex;gap:1px}
+.tv-dd{width:4px;height:4px;border-radius:50%}
+.tv-hitem{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--bdr);gap:10px}
+.tv-hitem:last-child{border-bottom:none}
+.tv-hd{font-size:13px;font-weight:600}.tv-hw{font-size:11px;color:var(--muted);margin-top:1px}
+.tv-hb{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.bdg-yoga{background:#1e0a2e;color:#c77dff;border-color:#7b2fbe}
+.bdg-home{background:#1a1200;color:#ffb703;border-color:#8a6400}
+.tv-notice{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--cbg);border:1px solid var(--cbd);border-radius:12px;font-size:12px;color:var(--c);margin:0 14px 14px}
+#tv-loading{display:none;text-align:center;padding:60px 20px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div id="hdr">
+    <div class="hrow">
+      <div class="htitle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5cc85c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="10.5" width="3.5" height="3" rx="1"/><rect x="18.5" y="10.5" width="3.5" height="3" rx="1"/>
+          <rect x="4.8" y="8.5" width="2.2" height="7" rx="1"/><rect x="17" y="8.5" width="2.2" height="7" rx="1"/>
+          <line x1="7" y1="12" x2="17" y2="12"/>
+        </svg>
+        Workout Tracker
+      </div>
+      <div class="hbtns">
+        <button class="chip cloud-chip" id="cloud-chip">☁️ Backup</button>
+        <button class="chip share-chip" id="share-chip">📤 Share</button>
+        <div class="chip streak-chip" id="streak-chip">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scroll">
+    <div class="view on" id="v-cal">
+      <div class="mrow">
+        <div class="ms"><div class="ms-v" id="ms-d">0</div><div class="ms-l">Days</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--g)" id="ms-i">0</div><div class="ms-l">Full</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--b)" id="ms-c">0</div><div class="ms-l">Cardio</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--y)" id="ms-o">0</div><div class="ms-l">Outdoor</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--c)" id="ms-s">0</div><div class="ms-l">Swim</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--p)" id="ms-yg">0</div><div class="ms-l">Yoga</div></div>
+        <div class="ms"><div class="ms-v" style="color:var(--o)" id="ms-hm">0</div><div class="ms-l">Home</div></div>
+      </div>
+      <div class="cnav">
+        <button class="carr" id="prev-m">&#8249;</button>
+        <span class="ctitle" id="cal-title"></span>
+        <button class="carr" id="next-m">&#8250;</button>
+      </div>
+      <div class="dgrid" id="dow-row" style="margin-bottom:4px"></div>
+      <div class="dgrid" id="day-grid"></div>
+      <div class="legend">
+        <div class="leg"><div class="leg-d" style="background:var(--g)"></div>Full workout</div>
+        <div class="leg"><div class="leg-d" style="background:var(--b)"></div>Cardio</div>
+        <div class="leg"><div class="leg-d" style="background:var(--y)"></div>Outdoor</div>
+        <div class="leg"><div class="leg-d" style="background:var(--c)"></div>Swimming</div>
+        <div class="leg"><div class="leg-d" style="background:var(--p)"></div>Yoga</div>
+        <div class="leg"><div class="leg-d" style="background:var(--o)"></div>Home workout</div>
+      </div>
+    </div>
+
+    <div class="view" id="v-stats">
+      <div class="sg">
+        <div class="sc"><div class="sc-l">Current streak</div><div class="sc-v" style="color:var(--g)" id="st-cur">0</div><div class="sc-s">days in a row</div></div>
+        <div class="sc"><div class="sc-l">Best streak</div><div class="sc-v" id="st-best">0</div><div class="sc-s">days</div></div>
+        <div class="sc full"><div class="sc-l">This month</div><div class="sc-v" id="st-mo">0</div><div class="sc-s" id="st-mo-s">active days</div><div class="divider"></div><div id="st-bars"></div></div>
+        <div class="sc full"><div class="sc-l">All time</div><div class="sc-v" id="st-all">0</div><div class="sc-s">total activities logged</div></div>
+        <div class="sc full">
+          <div class="sc-l">Month on Month</div>
+          <div id="st-monthly"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v-hist">
+      <div class="hlist" id="hist-list"></div>
+    </div>
+  </div>
+
+  <div id="nav">
+    <button class="nb on" id="nb-cal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendar
+    </button>
+    <button class="nb" id="nb-stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Stats
+    </button>
+    <button class="nb" id="nb-hist">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+      History
+    </button>
+  </div>
+</div>
+
+<!-- TRAINER VIEW -->
+<div id="tv">
+  <div class="tv-hero">
+    <div class="tv-badge" id="tv-badge"></div>
+    <div class="tv-name" id="tv-name"></div>
+    <div class="tv-sub" id="tv-sub"></div>
+    <div class="tv-refresh" id="tv-refresh">
+      <button class="tv-ref-btn" id="tv-ref-btn">🔄 Refresh</button>
+      <span class="tv-ref-time" id="tv-ref-time"></span>
+    </div>
+  </div>
+  <div id="tv-loading"><div style="font-size:32px;margin-bottom:12px">⏳</div><div>Loading latest data…</div></div>
+  <div id="tv-body" style="display:none">
+    <div class="tv-sstats">
+      <div class="tv-ss"><div class="tv-sv" style="color:var(--g)" id="tv-tot">0</div><div class="tv-sl">Total</div></div>
+      <div class="tv-ss"><div class="tv-sv" style="color:var(--y)" id="tv-str">0</div><div class="tv-sl">Streak</div></div>
+      <div class="tv-ss"><div class="tv-sv" style="color:var(--b)" id="tv-mo">0</div><div class="tv-sl">This Mo</div></div>
+      <div class="tv-ss"><div class="tv-sv" style="color:var(--c)" id="tv-act">0</div><div class="tv-sl">Acts</div></div>
+    </div>
+    <div class="tv-notice" id="tv-notice"></div>
+    <div class="tv-sec"><div class="tv-stitle">Breakdown</div><div class="tv-card" id="tv-bars"></div></div>
+    <div class="tv-sec"><div class="tv-stitle">Monthly Calendars</div><div id="tv-months"></div></div>
+    <div class="tv-sec"><div class="tv-stitle">All Sessions</div><div class="tv-card" style="padding:0;overflow:hidden" id="tv-hist"></div></div>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-bg" id="log-modal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="log-title"></div>
+    <div class="msub" id="log-sub"></div>
+    <div class="tlist">
+      <div class="tog" id="tog-intense"><span class="tog-i">🔥</span><span class="tog-n">Full workout</span><span class="chk" id="chk-intense">✓</span></div>
+      <div class="tog" id="tog-cardio"><span class="tog-i">🏃</span><span class="tog-n">Cardio only</span><span class="chk" id="chk-cardio">✓</span></div>
+      <div class="tog" id="tog-other"><span class="tog-i">🚶</span><span class="tog-n">Outdoor roam / walk</span><span class="chk" id="chk-other">✓</span></div>
+      <div class="tog" id="tog-swim"><span class="tog-i">🏊</span><span class="tog-n">Swimming</span><span class="chk" id="chk-swim">✓</span></div>
+      <div class="tog" id="tog-yoga"><span class="tog-i">🧘</span><span class="tog-n">Yoga</span><span class="chk" id="chk-yoga">✓</span></div>
+      <div class="tog" id="tog-home"><span class="tog-i">🏠</span><span class="tog-n">Home workout</span><span class="chk" id="chk-home">✓</span></div>
+    </div>
+    <div class="acts">
+      <button class="btn btn-g" id="log-save">Save</button>
+      <button class="btn btn-red" id="log-del">🗑</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLOUD MODAL -->
+<div class="modal-bg" id="cloud-modal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">☁️ Cloud Backup</div>
+    <div class="msub">Auto-saves to cloud on every entry using your existing GitHub account — no new signup needed.</div>
+
+    <div id="cl-setup">
+      <div class="ibox ibox-c" style="margin-bottom:14px">
+        <b>One-time setup (2 min) — you already have GitHub!</b><br><br>
+        1. Go to <b>github.com</b> → click your profile photo (top right) → <b>Settings</b><br><br>
+        2. Scroll to bottom of left sidebar → click <b>Developer settings</b><br><br>
+        3. Click <b>Personal access tokens</b> → <b>Tokens (classic)</b> → <b>Generate new token (classic)</b><br><br>
+        4. Name: <b>Workout Tracker</b> · Expiration: <b>No expiration</b> · tick ✅ <b>gist</b><br><br>
+        5. Click <b>Generate token</b> → copy the token → paste below
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">GitHub Personal Access Token</div>
+      <input class="inp" id="cl-apikey-inp" placeholder="Paste your GitHub token (ghp_...)" type="password">
+      <div class="blist">
+        <button class="btn btn-g" id="cl-enable">⚡ Enable Auto Cloud Backup</button>
+      </div>
+    </div>
+
+    <div id="cl-active" style="display:none">
+      <div class="id-box">
+        <div class="id-lbl">☁️ Your Backup ID — screenshot this!</div>
+        <div class="id-val" id="cl-id-val"></div>
+      </div>
+      <div class="ibox ibox-g" id="cl-last-saved">✅ Auto-saving on every entry</div>
+    </div>
+
+    <div class="smsg" id="cl-msg"></div>
+    <div style="height:16px"></div>
+    <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:6px">Restore on a new device</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Enter your GitHub token + Backup ID:</div>
+    <input class="inp" id="cl-restore-key" placeholder="Paste GitHub token (ghp_...)" type="password">
+    <input class="inp" id="cl-restore-inp" placeholder="Paste Backup ID" type="text">
+    <button class="btn" style="background:var(--gbg);color:var(--g);border:1px solid var(--gbd)" id="cl-restore-btn">🔄 Restore My Data</button>
+    <div style="height:10px"></div>
+    <button class="btn btn-out" id="cl-close">Done</button>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="share-modal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">📤 Share with Trainer</div>
+    <div class="msub">Your trainer opens the link in any browser — no app or login needed.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Your name</div>
+    <input class="inp" id="share-name" placeholder="e.g. Preeti" maxlength="40" type="text">
+    <div id="share-live-notice" style="display:none" class="ibox ibox-g">🔴 <b>Live Link</b> — trainer always sees your latest entries automatically.</div>
+    <div id="share-snap-notice" style="display:none" class="ibox ibox-y">📸 <b>Snapshot only</b> — trainer sees today's data. Enable ☁️ Backup for a live link.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Your link</div>
+    <div class="link-box" id="share-link">Tap Generate to create your link</div>
+    <div class="blist">
+      <button class="btn btn-c" id="share-gen">⚡ Generate Link</button>
+      <button class="btn" style="background:var(--surf);color:var(--g);border:1px solid var(--gbd);display:none" id="share-copy">📋 Copy Link</button>
+      <button class="btn btn-wa" style="display:none" id="share-wa">💬 Share via WhatsApp</button>
+      <button class="btn btn-out" id="share-close">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+var DATA={}, TODAY=new Date();
+var vY=TODAY.getFullYear(), vM=TODAY.getMonth();
+var TYPES=['intense','cardio','other','swim','yoga','home'];
+var LABELS={intense:'Full',cardio:'Cardio',other:'Outdoor',swim:'Swim',yoga:'Yoga',home:'Home'};
+var MONTHS='January February March April May June July August September October November December'.split(' ');
+var DOWS=['Su','Mo','Tu','We','Th','Fr','Sa'];
+var DM={intense:'g',cardio:'b',other:'y',swim:'c',yoga:'p',home:'o2'};
+var SK='wt_data', CK='wt_cloud', NK='wt_name', LK='wt_last', AK='wt_apikey';
+var logKey=null, logSel={}, shareLink='', saveTimer=null;
+var GIST_API='https://api.github.com/gists';
+
+// ── utils ─────────────────────────────────────────────
+function pad(n){return n<10?'0'+n:''+n}
+function fk(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function g(id){return document.getElementById(id)}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function toast(m,d){var t=g('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},d||2200)}
+function showMsg(id,type,msg){var el=g(id);el.className='smsg '+type;el.textContent=msg;el.style.display='block'}
+function hideMsg(id){g(id).style.display='none'}
+function openModal(id){g(id).classList.add('open')}
+function closeModal(id){g(id).classList.remove('open')}
+
+// ── storage ───────────────────────────────────────────
+function loadData(){try{var s=ls(SK);if(s)DATA=JSON.parse(s)}catch(e){DATA={}}}
+function saveLocal(){try{ls(SK,JSON.stringify(DATA))}catch(e){}}
+function cloudId(){return ls(CK)}
+function apiKey(){return ls(AK)}
+function ghHeaders(){return{'Content-Type':'application/json','Accept':'application/vnd.github+json','Authorization':'Bearer '+apiKey()}}
+function gistBody(){return JSON.stringify({description:'Workout Tracker Backup',public:true,files:{'workout-data.json':{content:JSON.stringify(DATA)}}})}
+
+function autoCloud(){
+  if(!cloudId()||!apiKey())return;
+  if(saveTimer)clearTimeout(saveTimer);
+  setCloudChip('saving','🔄 Saving…');
+  saveTimer=setTimeout(function(){
+    fetch(GIST_API+'/'+cloudId(),{method:'PATCH',headers:ghHeaders(),body:gistBody()})
+      .then(function(r){
+        if(r.ok){var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});ls(LK,t);setCloudChip('on','☁️ Saved');updateCloudModal()}
+        else{setCloudChip('err','⚠️ Error')}
+      }).catch(function(){setCloudChip('err','⚠️ Offline')})
+  },1500)
+}
+
+function setCloudChip(cls,label){var c=g('cloud-chip');c.className='chip cloud-chip'+(cls?' '+cls:'');c.textContent=label}
+
+function persist(){saveLocal();autoCloud()}
+
+// ── url params ────────────────────────────────────────
+function qp(n){
+  var idx=location.href.indexOf('?');if(idx<0)return null;
+  var parts=location.href.slice(idx+1).split('&');
+  for(var i=0;i<parts.length;i++){var kv=parts[i].split('=');if(decodeURIComponent(kv[0])===n)return decodeURIComponent(kv.slice(1).join('='))}
+  return null
+}
+
+// ── trainer view ──────────────────────────────────────
+function buildTrainerView(tvData,name,isLive){
+  var T=TODAY, pfx=T.getFullYear()+'-'+pad(T.getMonth()+1)+'-';
+  var tot=0,str=0,mo=0,all=0,ic=0,cc=0,oc=0,sc=0,yc=0,hc=0;
+  Object.keys(tvData).forEach(function(k){
+    var a=tvData[k]||[];if(!a.length)return;
+    tot++;all+=a.length;
+    if(k.indexOf(pfx)===0)mo++;
+    if(a.indexOf('intense')>-1)ic++;if(a.indexOf('cardio')>-1)cc++;
+    if(a.indexOf('other')>-1)oc++;if(a.indexOf('swim')>-1)sc++;
+    if(a.indexOf('yoga')>-1)yc++;if(a.indexOf('home')>-1)hc++;
+  });
+  var d=new Date(T);while(true){var k=fk(d);if(tvData[k]&&tvData[k].length){str++;d.setDate(d.getDate()-1)}else break}
+  g('tv-tot').textContent=tot;g('tv-str').textContent=str;g('tv-mo').textContent=mo;g('tv-act').textContent=all;
+  // bars
+  var mx=Math.max(ic,cc,oc,sc,yc,hc,1);
+  function bar(l,c,v){return'<div class="br"><span class="bl" style="color:'+c+'">'+l+'</span><div class="bt"><div class="bf" style="width:'+Math.round(v/mx*100)+'%;background:'+c+'"></div></div><span class="bn" style="color:'+c+'">'+v+'</span></div>'}
+  g('tv-bars').innerHTML=bar('Full','var(--g)',ic)+bar('Cardio','var(--b)',cc)+bar('Outdoor','var(--y)',oc)+bar('Swim','var(--c)',sc)+bar('Yoga','var(--p)',yc)+bar('Home','var(--o)',hc);
+  // months
+  var mhtml='';
+  for(var m=0;m<6;m++){
+    var md=new Date(T.getFullYear(),T.getMonth()-m,1);
+    var mY=md.getFullYear(),mM=md.getMonth(),mPfx=mY+'-'+pad(mM+1)+'-';
+    var mCnt=Object.keys(tvData).filter(function(k){return k.indexOf(mPfx)===0&&tvData[k]&&tvData[k].length}).length;
+    var cells='';DOWS.forEach(function(dw){cells+='<div class="tv-dow">'+dw+'</div>'});
+    var mF=new Date(mY,mM,1).getDay(),mD=new Date(mY,mM+1,0).getDate();
+    for(var bi=0;bi<mF;bi++)cells+='<div class="tv-day e"></div>';
+    for(var dd=1;dd<=mD;dd++){
+      var key=mY+'-'+pad(mM+1)+'-'+pad(dd),types=tvData[key]||[];
+      var dots=TYPES.filter(function(t){return types.indexOf(t)>-1}).map(function(t){return'<span class="tv-dd dd-'+DM[t]+'"></span>'}).join('');
+      cells+='<div class="tv-day'+(types.length?' has-e':'')+'"><span>'+dd+'</span><div class="tv-ddots">'+dots+'</div></div>';
+    }
+    mhtml+='<div class="tv-card"><div class="tv-mhdr"><span class="tv-mname">'+MONTHS[mM]+' '+mY+'</span><span class="tv-mcnt">'+mCnt+' days</span></div><div class="tv-cal">'+cells+'</div></div>';
+  }
+  g('tv-months').innerHTML=mhtml;
+  // history
+  var entries=Object.keys(tvData).filter(function(k){return tvData[k]&&tvData[k].length}).sort(function(a,b){return b.localeCompare(a)});
+  g('tv-hist').innerHTML=!entries.length?'<div style="padding:20px;text-align:center;color:var(--muted)">No entries yet</div>':entries.map(function(k){
+    var p=k.split('-'),dt=new Date(+p[0],+p[1]-1,+p[2]);
+    var b=(tvData[k]||[]).map(function(t){return'<span class="bdg bdg-'+t+'">'+(LABELS[t]||t)+'</span>'}).join('');
+    return'<div class="tv-hitem"><div><div class="tv-hd">'+dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</div><div class="tv-hw">'+dt.toLocaleDateString('en-IN',{weekday:'long'})+'</div></div><div class="tv-hb">'+b+'</div></div>';
+  }).join('');
+  g('tv-notice').textContent='Shared by '+name;
+  g('tv-loading').style.display='none';
+  g('tv-body').style.display='block';
+  if(isLive){var now=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});g('tv-ref-time').textContent='Updated '+now}
+}
+
+// check URL params
+var liveId=qp('live'),snapData=qp('data'),pName=qp('name'),pOn=qp('on');
+
+if(liveId||snapData){
+  g('app').style.display='none';
+  g('tv').classList.add('open');
+  var tvName=pName||'Your trainee';
+  g('tv-name').textContent=tvName+"'s Workout Progress";
+  if(liveId){
+    g('tv-badge').textContent='🔴 Live · Always up to date';
+    g('tv-badge').style.cssText='background:rgba(255,60,33,.15);border-color:#ff3621;color:#ff7055';
+    g('tv-sub').textContent='Opens fresh each time';
+    g('tv-refresh').style.display='flex';
+    function doRefresh(){
+      g('tv-loading').style.display='block';g('tv-body').style.display='none';
+      g('tv-loading').innerHTML='<div style="font-size:32px;margin-bottom:12px">⏳</div><div>Loading latest data…</div>';
+      g('tv-ref-time').textContent='Refreshing…';
+      fetch(GIST_API+'/'+liveId,{headers:{'Accept':'application/vnd.github+json'}})
+        .then(function(r){return r.ok?r.json():Promise.reject('HTTP '+r.status)})
+        .then(function(res){
+          var content=res.files&&res.files['workout-data.json']&&res.files['workout-data.json'].content;
+          if(!content)throw new Error('no content');
+          var d=JSON.parse(content);
+          buildTrainerView(d,tvName,true);
+        })
+        .catch(function(){g('tv-loading').innerHTML='<div style="font-size:28px;margin-bottom:10px">❌</div><div>Could not load. The link may be invalid or the gist is private.<br><br>Ask the sender to re-share the link.</div>'})
+    }
+    g('tv-ref-btn').addEventListener('click',doRefresh);
+    doRefresh();
+  } else {
+    g('tv-badge').textContent='📸 Snapshot · '+( pOn||'');
+    g('tv-badge').style.cssText='background:var(--ybg);border-color:var(--ybd);color:var(--y)';
+    g('tv-sub').textContent='Data as of '+( pOn||'sharing date');
+    g('tv-loading').style.display='none';
+    var tvD={};try{tvD=JSON.parse(atob(snapData.replace(/ /g,'+')))}catch(e){}
+    buildTrainerView(tvD,tvName,false);
+  }
+  return; // stop — don't init main app
+}
+
+// ── MAIN APP INIT ─────────────────────────────────────
+loadData();
+
+// ── render ────────────────────────────────────────────
+function render(){renderCal();renderMini();renderStreak()}
+
+function renderCal(){
+  g('cal-title').textContent=MONTHS[vM]+' '+vY;
+  var dr=g('dow-row');dr.innerHTML='';
+  DOWS.forEach(function(d){var e=document.createElement('div');e.className='dow';e.textContent=d;dr.appendChild(e)});
+  var gr=g('day-grid');gr.innerHTML='';
+  var first=new Date(vY,vM,1).getDay(),total=new Date(vY,vM+1,0).getDate();
+  var ny=TODAY.getFullYear(),nm=TODAY.getMonth(),nd=TODAY.getDate();
+  for(var i=0;i<first;i++){var e=document.createElement('div');e.className='day empty';gr.appendChild(e)}
+  for(var d=1;d<=total;d++){
+    (function(day){
+      var key=vY+'-'+pad(vM+1)+'-'+pad(day);
+      var future=vY>ny||(vY===ny&&vM>nm)||(vY===ny&&vM===nm&&day>nd);
+      var isT=vY===ny&&vM===nm&&day===nd;
+      var types=DATA[key]||[];
+      var cell=document.createElement('div');
+      cell.className='day'+(types.length?' has-e':'')+(future?' future':'')+(isT?' today':'');
+      var dots=TYPES.filter(function(t){return types.indexOf(t)>-1}).map(function(t){return'<span class="dd dd-'+DM[t]+'"></span>'}).join('');
+      cell.innerHTML='<div class="di"><span class="dn">'+day+'</span><div class="ddots">'+dots+'</div></div>';
+      if(!future)cell.addEventListener('click',function(){openLog(key)});
+      gr.appendChild(cell);
+    })(d);
+  }
+}
+
+function renderMini(){
+  var pfx=TODAY.getFullYear()+'-'+pad(TODAY.getMonth()+1)+'-';
+  var days=0,ic=0,cc=0,oc=0,sc=0,yc=0,hc=0;
+  Object.keys(DATA).forEach(function(k){
+    if(k.indexOf(pfx)!==0)return;var a=DATA[k]||[];if(!a.length)return;
+    days++;if(a.indexOf('intense')>-1)ic++;if(a.indexOf('cardio')>-1)cc++;if(a.indexOf('other')>-1)oc++;if(a.indexOf('swim')>-1)sc++;if(a.indexOf('yoga')>-1)yc++;if(a.indexOf('home')>-1)hc++;
+  });
+  g('ms-d').textContent=days;g('ms-i').textContent=ic;g('ms-c').textContent=cc;g('ms-o').textContent=oc;g('ms-s').textContent=sc;g('ms-yg').textContent=yc;g('ms-hm').textContent=hc;
+}
+
+function calcStreak(){var s=0,d=new Date(TODAY);while(true){var k=fk(d);if(DATA[k]&&DATA[k].length){s++;d.setDate(d.getDate()-1)}else break}return s}
+function calcBest(){
+  var keys=Object.keys(DATA).filter(function(k){return DATA[k]&&DATA[k].length}).sort();
+  if(!keys.length)return 0;var best=1,cur=1;
+  for(var i=1;i<keys.length;i++){var df=(new Date(keys[i])-new Date(keys[i-1]))/864e5;if(df===1){cur++;if(cur>best)best=cur}else cur=1}
+  return best
+}
+function renderStreak(){var s=calcStreak();g('streak-chip').textContent=s===0?'Start!':s===1?'1 day 💪':s+' days 🔥'}
+
+function renderStats(){
+  g('st-cur').textContent=calcStreak();g('st-best').textContent=calcBest();
+  var pfx=TODAY.getFullYear()+'-'+pad(TODAY.getMonth()+1)+'-';
+  var days=0,ic=0,cc=0,oc=0,sc=0;
+  Object.keys(DATA).forEach(function(k){
+    if(k.indexOf(pfx)!==0)return;var a=DATA[k]||[];if(!a.length)return;
+    days++;if(a.indexOf('intense')>-1)ic++;if(a.indexOf('cardio')>-1)cc++;if(a.indexOf('other')>-1)oc++;if(a.indexOf('swim')>-1)sc++;
+  });
+  g('st-mo').textContent=days;g('st-mo-s').textContent='active days · '+(ic+cc+oc+sc)+' total activities';
+  var mx=Math.max(ic,cc,oc,sc,1);
+  function bar(l,c,v){return'<div class="br"><span class="bl" style="color:'+c+'">'+l+'</span><div class="bt"><div class="bf" style="width:'+Math.round(v/mx*100)+'%;background:'+c+'"></div></div><span class="bn" style="color:'+c+'">'+v+'</span></div>'}
+  g('st-bars').innerHTML=bar('Full','var(--g)',ic)+bar('Cardio','var(--b)',cc)+bar('Outdoor','var(--y)',oc)+bar('Swim','var(--c)',sc);
+  var tot=0;Object.keys(DATA).forEach(function(k){tot+=(DATA[k]||[]).length});g('st-all').textContent=tot;
+
+  // ── month on month ────────────────────────────────
+  // collect all months that have data
+  var monthSet={};
+  Object.keys(DATA).forEach(function(k){
+    var a=DATA[k]||[];if(!a.length)return;
+    var mo=k.slice(0,7);monthSet[mo]=1;
+  });
+  var allMonths=Object.keys(monthSet).sort(function(a,b){return b.localeCompare(a)});
+
+  if(!allMonths.length){g('st-monthly').innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0">No data yet</div>';return;}
+
+  var moHTML='';
+  allMonths.forEach(function(mo){
+    var parts=mo.split('-'),mY=+parts[0],mM=+parts[1]-1;
+    var pfxMo=mo+'-';
+    var mDays=0,mic=0,mcc=0,moc=0,msc=0,myc=0,mhc=0;
+    Object.keys(DATA).forEach(function(k){
+      if(k.indexOf(pfxMo)!==0)return;
+      var a=DATA[k]||[];if(!a.length)return;
+      mDays++;
+      if(a.indexOf('intense')>-1)mic++;if(a.indexOf('cardio')>-1)mcc++;
+      if(a.indexOf('other')>-1)moc++;if(a.indexOf('swim')>-1)msc++;
+      if(a.indexOf('yoga')>-1)myc++;if(a.indexOf('home')>-1)mhc++;
+    });
+    var mTotal=mic+mcc+moc+msc+myc+mhc;
+    var mMax=Math.max(mic,mcc,moc,msc,myc,mhc,1);
+    var daysInMo=new Date(mY,mM+1,0).getDate();
+    var pct=Math.round(mDays/daysInMo*100);
+
+    // activity chips
+    var chips='';
+    var acts=[
+      {k:'intense',l:'Full',c:'var(--g)',bc:'var(--gbd)',bg:'var(--gbg)',v:mic},
+      {k:'cardio',l:'Cardio',c:'var(--b)',bc:'var(--bbd)',bg:'var(--bbg)',v:mcc},
+      {k:'other',l:'Outdoor',c:'var(--y)',bc:'var(--ybd)',bg:'var(--ybg)',v:moc},
+      {k:'swim',l:'Swim',c:'var(--c)',bc:'var(--cbd)',bg:'var(--cbg)',v:msc},
+      {k:'yoga',l:'Yoga',c:'var(--p)',bc:'var(--pbd)',bg:'var(--pbg)',v:myc},
+      {k:'home',l:'Home',c:'var(--o)',bc:'var(--obd)',bg:'var(--obg)',v:mhc}
+    ];
+    acts.forEach(function(a){
+      if(!a.v)return;
+      chips+='<span class="mo-act" style="color:'+a.c+';border-color:'+a.bc+';background:'+a.bg+'">'+a.l+' ×'+a.v+'</span>';
+    });
+
+    // mini bars
+    var bars='';
+    acts.forEach(function(a){
+      if(!a.v)return;
+      bars+='<div class="mo-bar-row" style="margin-bottom:4px">'+
+        '<span style="font-size:10px;color:'+a.c+';width:46px;flex-shrink:0">'+a.l+'</span>'+
+        '<div class="mo-bar-track"><div class="mo-bar-fill" style="width:'+Math.round(a.v/mMax*100)+'%;background:'+a.c+'"></div></div>'+
+        '<span style="font-size:10px;color:'+a.c+';width:18px;text-align:right;flex-shrink:0">'+a.v+'</span>'+
+        '</div>';
+    });
+
+    moHTML+='<div class="mo-row">'+
+      '<div class="mo-hdr">'+
+        '<span class="mo-name">'+MONTHS[mM]+' '+mY+'</span>'+
+        '<span class="mo-days">'+mDays+' days &nbsp;·&nbsp; '+pct+'% consistency</span>'+
+      '</div>'+
+      '<div class="mo-acts">'+chips+'</div>'+
+      bars+
+      '</div>';
+  });
+  g('st-monthly').innerHTML=moHTML;
+}
+
+function renderHist(){
+  var list=g('hist-list');
+  var entries=Object.keys(DATA).filter(function(k){return DATA[k]&&DATA[k].length}).sort(function(a,b){return b.localeCompare(a)});
+  if(!entries.length){list.innerHTML='<div class="empty-s">No activity yet.<br>Tap any day to log! 💪</div>';return}
+  list.innerHTML=entries.map(function(k){
+    var p=k.split('-'),dt=new Date(+p[0],+p[1]-1,+p[2]);
+    var b=(DATA[k]||[]).map(function(t){return'<span class="bdg bdg-'+t+'">'+(LABELS[t]||t)+'</span>'}).join('');
+    return'<div class="hitem"><div><div class="hd">'+dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+'</div><div class="hw">'+dt.toLocaleDateString('en-IN',{weekday:'long'})+'</div></div><div class="hb">'+b+'</div></div>';
+  }).join('');
+}
+
+// ── nav ───────────────────────────────────────────────
+function goView(v){
+  ['cal','stats','hist'].forEach(function(x){g('v-'+x).classList.toggle('on',x===v);g('nb-'+x).classList.toggle('on',x===v)});
+  if(v==='stats')renderStats();if(v==='hist')renderHist();
+}
+g('nb-cal').addEventListener('click',function(){goView('cal')});
+g('nb-stats').addEventListener('click',function(){goView('stats')});
+g('nb-hist').addEventListener('click',function(){goView('hist')});
+g('prev-m').addEventListener('click',function(){vM--;if(vM<0){vM=11;vY--}renderCal();renderMini()});
+g('next-m').addEventListener('click',function(){vM++;if(vM>11){vM=0;vY++}renderCal();renderMini()});
+
+// ── log modal ─────────────────────────────────────────
+function openLog(key){
+  logKey=key;
+  var p=key.split('-'),dt=new Date(+p[0],+p[1]-1,+p[2]);
+  g('log-title').textContent=dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  var ex=DATA[key]||[];
+  g('log-sub').textContent=ex.length?ex.length+' activit'+(ex.length>1?'ies':'y')+' logged — update below':'Select all activities for this day';
+  logSel={};ex.forEach(function(t){logSel[t]=true});
+  g('log-del').style.display=ex.length?'inline-block':'none';
+  updToggles();openModal('log-modal');
+}
+function updToggles(){
+  TYPES.forEach(function(t){
+    var on=!!logSel[t];
+    g('tog-'+t).className='tog'+(on?' sel-'+t:'');
+    g('chk-'+t).style.color=on?'inherit':'transparent';
+  });
+}
+TYPES.forEach(function(t){g('tog-'+t).addEventListener('click',function(){if(logSel[t])delete logSel[t];else logSel[t]=true;updToggles()})});
+g('log-save').addEventListener('click',function(){
+  if(!logKey)return;
+  var arr=TYPES.filter(function(t){return logSel[t]});
+  if(arr.length)DATA[logKey]=arr;else delete DATA[logKey];
+  persist();closeModal('log-modal');render();
+});
+g('log-del').addEventListener('click',function(){
+  if(!logKey)return;delete DATA[logKey];persist();closeModal('log-modal');render();
+});
+g('log-modal').addEventListener('click',function(e){if(e.target===g('log-modal'))closeModal('log-modal')});
+
+// ── cloud modal ───────────────────────────────────────
+function updateCloudModal(){
+  var id=cloudId();
+  g('cl-setup').style.display=id?'none':'block';
+  g('cl-active').style.display=id?'block':'none';
+  if(id){
+    g('cl-id-val').textContent=id;
+    var t=ls(LK);if(t)g('cl-last-saved').textContent='✅ Auto-saving on every entry · Last saved: '+t;
+  }
+  if(!id&&apiKey())g('cl-apikey-inp').value=apiKey();
+}
+
+g('cloud-chip').addEventListener('click',function(){
+  updateCloudModal();hideMsg('cl-msg');g('cl-restore-inp').value='';openModal('cloud-modal');
+});
+g('cl-close').addEventListener('click',function(){closeModal('cloud-modal')});
+g('cloud-modal').addEventListener('click',function(e){if(e.target===g('cloud-modal'))closeModal('cloud-modal')});
+
+g('cl-enable').addEventListener('click',function(){
+  var key=g('cl-apikey-inp').value.trim();
+  if(!key){showMsg('cl-msg','err','Please paste your GitHub token first.');return}
+  if(key.indexOf('ghp_')!==0&&key.indexOf('github_pat_')!==0){showMsg('cl-msg','err','Token should start with ghp_ — please check and try again.');return}
+  var btn=g('cl-enable');btn.textContent='⏳ Creating backup…';btn.disabled=true;
+  fetch(GIST_API,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/vnd.github+json','Authorization':'Bearer '+key},
+    body:JSON.stringify({description:'Workout Tracker Backup',public:true,files:{'workout-data.json':{content:JSON.stringify(DATA)}}})
+  })
+    .then(function(r){
+      btn.textContent='⚡ Enable Auto Cloud Backup';btn.disabled=false;
+      if(r.status===401){showMsg('cl-msg','err','❌ Invalid token. Please check it and try again.');throw new Error();}
+      if(!r.ok){showMsg('cl-msg','err','❌ Error '+r.status+'. Please try again.');throw new Error();}
+      return r.json();
+    })
+    .then(function(data){
+      var id=data.id;
+      if(!id)throw new Error('no id');
+      ls(CK,id);ls(AK,key);
+      var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});ls(LK,t);
+      setCloudChip('on','☁️ Saved');updateCloudModal();
+      showMsg('cl-msg','ok','✅ Cloud backup enabled! Screenshot your Backup ID.');
+    })
+    .catch(function(){});
+});
+
+g('cl-restore-btn').addEventListener('click',function(){
+  var key=g('cl-restore-key').value.trim();
+  var id=g('cl-restore-inp').value.trim();
+  if(!key||!id){showMsg('cl-msg','err','Please enter both your GitHub token and Backup ID.');return}
+  var btn=g('cl-restore-btn');btn.textContent='⏳ Restoring…';btn.disabled=true;
+  fetch(GIST_API+'/'+id,{headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+key}})
+    .then(function(r){
+      if(r.status===401){showMsg('cl-msg','err','❌ Invalid token.');btn.textContent='🔄 Restore My Data';btn.disabled=false;throw new Error();}
+      if(r.status===404){showMsg('cl-msg','err','❌ Backup ID not found.');btn.textContent='🔄 Restore My Data';btn.disabled=false;throw new Error();}
+      return r.ok?r.json():Promise.reject('HTTP '+r.status);
+    })
+    .then(function(res){
+      btn.textContent='🔄 Restore My Data';btn.disabled=false;
+      var content=res.files&&res.files['workout-data.json']&&res.files['workout-data.json'].content;
+      if(!content)throw new Error('no content');
+      var d=JSON.parse(content);
+      if(!d||typeof d!=='object')throw new Error('bad data');
+      DATA=d;saveLocal();ls(CK,id);ls(AK,key);setCloudChip('on','☁️ Saved');
+      updateCloudModal();render();
+      showMsg('cl-msg','ok','✅ Restored! '+Object.keys(DATA).length+' days recovered.');
+      toast('✅ Data restored successfully!');
+    })
+    .catch(function(){});
+});
+
+// ── share modal ───────────────────────────────────────
+g('share-chip').addEventListener('click',function(){
+  g('share-name').value=ls(NK)||'';
+  g('share-link').textContent='Tap Generate to create your link';
+  g('share-gen').style.display='block';g('share-copy').style.display='none';g('share-wa').style.display='none';
+  shareLink='';
+  var hasCloud=!!cloudId();
+  g('share-live-notice').style.display=hasCloud?'block':'none';
+  g('share-snap-notice').style.display=hasCloud?'none':'block';
+  openModal('share-modal');
+});
+g('share-close').addEventListener('click',function(){closeModal('share-modal')});
+g('share-modal').addEventListener('click',function(e){if(e.target===g('share-modal'))closeModal('share-modal')});
+
+g('share-gen').addEventListener('click',function(){
+  var name=g('share-name').value.trim()||'My';ls(NK,name);
+  var base=location.href.split('?')[0];
+  var id=cloudId();
+  if(id){
+    shareLink=base+'?live='+encodeURIComponent(id)+'&name='+encodeURIComponent(name);
+  } else {
+    var enc=btoa(unescape(encodeURIComponent(JSON.stringify(DATA))));
+    var dateStr=TODAY.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    shareLink=base+'?data='+encodeURIComponent(enc)+'&name='+encodeURIComponent(name)+'&on='+encodeURIComponent(dateStr);
+  }
+  g('share-link').textContent=shareLink;
+  g('share-gen').style.display='none';g('share-copy').style.display='block';g('share-wa').style.display='block';
+});
+
+g('share-copy').addEventListener('click',function(){
+  if(!shareLink)return;
+  var done=function(){g('share-copy').textContent='✅ Copied!';setTimeout(function(){g('share-copy').textContent='📋 Copy Link'},2000)};
+  if(navigator.clipboard){navigator.clipboard.writeText(shareLink).then(done).catch(function(){fb(done)})}else{fb(done)}
+  function fb(cb){var t=document.createElement('textarea');t.value=shareLink;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.focus();t.select();try{document.execCommand('copy');cb()}catch(e){}document.body.removeChild(t)}
+});
+
+g('share-wa').addEventListener('click',function(){
+  if(!shareLink)return;
+  var name=g('share-name').value.trim()||'My';
+  window.open('https://wa.me/?text='+encodeURIComponent('Hi! Here is '+name+"'s workout progress 💪\n\n"+shareLink),'_blank');
+});
+
+// ── init cloud status ─────────────────────────────────
+if(cloudId()&&apiKey()){
+  setCloudChip('on','☁️ Synced');
+  fetch(GIST_API+'/'+cloudId(),{headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+apiKey()}})
+    .then(function(r){setCloudChip(r.ok?'on':'err',r.ok?'☁️ Synced':'⚠️ Offline')})
+    .catch(function(){setCloudChip('err','⚠️ Offline')});
+} else {
+  setCloudChip('','☁️ Backup');
+}
+
+// ── boot ──────────────────────────────────────────────
+render();
+
+// Fix viewport height on mobile (address bar issue)
+function fixVH(){document.documentElement.style.setProperty('--real-vh',window.innerHeight+'px');document.body.style.height=window.innerHeight+'px';}
+fixVH();
+window.addEventListener('resize',fixVH);
+
+// Register service worker for PWA install
+if('serviceWorker' in navigator){
+  var swCode = `
+    const CACHE='wt-v1';
+    const FILES=['./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
+    self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting();});
+    self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
+    self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./index.html'))));});
+  `;
+  var blob = new Blob([swCode],{type:'application/javascript'});
+  var swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(function(){});
+}
+})();
+</script>
+</body>
+</html>
